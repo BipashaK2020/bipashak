@@ -10,6 +10,8 @@ Open `index.html` for the academic pages. Microphone, camera and motion demonstr
 
 Academic page content and the shared page layout are in `build.mjs`. Run `node build.mjs` to regenerate the eight pages, bibliography and 404 page. Styling is in `style.css`. The generated HTML is committed so hosting needs no build tools. Instrument HTML files are self-contained and edited directly.
 
+The academic layout follows the owner's Ting Dang reference: a charcoal navigation bar, full-width research banner, circular portrait, blue section headings and two-column research projects. Bipasha's own content and images are retained. `site.js` controls the accessible mobile menu; navigation remains available without JavaScript. `menu.svg` uses the Lucide Menu icon, with its license in `LUCIDE-LICENSE.txt`.
+
 The instruments are research demonstrations, not medical devices. Their browser implementations have not been established as equivalent to validated study systems. Four sensor instruments include clearly labelled synthetic examples that work without hardware access. Recording can be cancelled; leaving a page stops capture. Finger tapping supports touch, mouse, Space and Enter.
 
 ## GitHub Pages
