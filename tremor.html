@@ -102,29 +102,40 @@ function fitCanvas(c){const d=window.devicePixelRatio||1;const w=c.clientWidth;c
 function plotbg(g,w,h){g.fillStyle=V('--plotbg');g.fillRect(0,0,w,h);}
 function grid(g,w,h){g.strokeStyle=V('--grid');g.lineWidth=1;for(let x=0;x<=w;x+=w/8){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();}for(let y=0;y<=h;y+=h/4){g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();}}
 function trace(g,w,h,arr,lo,hi,color){if(arr.length<2)return;g.save();g.strokeStyle=color||V('--dot');g.lineWidth=2;g.shadowColor=color||V('--dot');g.shadowBlur=10;g.lineJoin='round';g.beginPath();for(let i=0;i<arr.length;i++){const x=i/(arr.length-1)*w;const y=h-(arr[i]-lo)/(hi-lo)*h;if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();g.restore();}
-function idleWave(c,g,phaseRef){if(RM)return;const w=c.clientWidth,h=c.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);const a=[];for(let i=0;i<160;i++){const t=i/160;a.push(0.35*Math.sin(2*Math.PI*(3*t)+phaseRef.p)*Math.exp(-((t-0.5)**2)/0.12)+0.06*Math.sin(2*Math.PI*11*t+phaseRef.p*2));}trace(g,w,h,a,-0.6,0.6,V('--dot'));phaseRef.p+=0.045;}
-function tween(el,to,dec,suffix){if(RM||!isFinite(to)){el.textContent=fmt(to,dec)+(suffix||'');return;}const t0=performance.now();el.classList.add('hot');(function f(){const k=Math.min(1,(performance.now()-t0)/700);const e=1-Math.pow(1-k,3);el.textContent=fmt(to*e,dec)+(suffix||'');if(k<1)requestAnimationFrame(f);else setTimeout(()=>el.classList.remove('hot'),600);})();}
+function idleWave(c,g,phaseRef){const w=c.clientWidth,h=c.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);const a=[];for(let i=0;i<160;i++){const t=i/160;a.push(0.35*Math.sin(2*Math.PI*(3*t)+phaseRef.p)*Math.exp(-((t-0.5)**2)/0.12)+0.06*Math.sin(2*Math.PI*11*t+phaseRef.p*2));}trace(g,w,h,a,-0.6,0.6,V('--dot'));if(!RM)phaseRef.p+=0.045;}
+function tween(el,to,dec,suffix){el.textContent=fmt(to,dec)+(suffix||'');}
 function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len;const wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<len/2;j++){const ur=re[i+j],ui=im[i+j];const vr=re[i+j+len/2]*cr-im[i+j+len/2]*ci;const vi=re[i+j+len/2]*ci+im[i+j+len/2]*cr;re[i+j]=ur+vr;im[i+j]=ui+vi;re[i+j+len/2]=ur-vr;im[i+j+len/2]=ui-vi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}}
 function psd(sig,fs){let n=1;while(n<sig.length*2)n<<=1;const re=new Float64Array(n),im=new Float64Array(n);const N=sig.length;const mean=sig.reduce((a,b)=>a+b,0)/N;for(let i=0;i<N;i++){const w=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));re[i]=(sig[i]-mean)*w;}fft(re,im);const out=[];for(let k=0;k<n/2;k++){out.push({f:k*fs/n,p:(re[k]*re[k]+im[k]*im[k])/N});}return out;}
 function fmt(x,d){return isFinite(x)?x.toFixed(d):'--';}
 
 const wave=document.getElementById('wave'),spec=document.getElementById('spec');
 let gw=fitCanvas(wave),gs=fitCanvas(spec);
-window.addEventListener('resize',()=>{gw=fitCanvas(wave);gs=fitCanvas(spec);drawIdle();});
+window.addEventListener('resize',()=>{gw=fitCanvas(wave);gs=fitCanvas(spec);if(!recording){if(samples.length>=100)finish();else drawIdle();}});
 const st=document.getElementById('status'),btn=document.getElementById('go');
-let samples=[],t0=0,live=null;
-const ph={p:0};let idleRaf=null;function drawIdle(){const w2=spec.clientWidth,h2=spec.clientHeight;gs.clearRect(0,0,w2,h2);plotbg(gs,w2,h2);grid(gs,w2,h2);(function loop(){idleWave(wave,gw,ph);idleRaf=requestAnimationFrame(loop);})();}
+let samples=[],t0=0,live=null,recording=false,recordingTimer=null,captureVersion=0;
+const ph={p:0};let idleRaf=null;function drawIdle(){cancelAnimationFrame(idleRaf);const w2=spec.clientWidth,h2=spec.clientHeight;gs.clearRect(0,0,w2,h2);plotbg(gs,w2,h2);grid(gs,w2,h2);(function loop(){idleWave(wave,gw,ph);idleRaf=requestAnimationFrame(loop);})();}
 drawIdle();
-function onMotion(e){const a=e.acceleration&&e.acceleration.x!==null?e.acceleration:e.accelerationIncludingGravity;if(!a)return;const t=(performance.now()-t0)/1000;samples.push({t:t,m:Math.hypot(a.x||0,a.y||0,a.z||0)});}
+function onMotion(e){const a=e.acceleration&&Number.isFinite(e.acceleration.x)?e.acceleration:e.accelerationIncludingGravity;if(!a||![a.x,a.y,a.z].some(Number.isFinite))return;const t=(performance.now()-t0)/1000;samples.push({t:t,x:a.x||0,y:a.y||0,z:a.z||0,m:a.x||0});}
 function drawLive(){const w=wave.clientWidth,h=wave.clientHeight;gw.clearRect(0,0,w,h);plotbg(gw,w,h);grid(gw,w,h);const m=samples.map(s=>s.m);const mean=m.reduce((a,b)=>a+b,0)/Math.max(1,m.length);const d=m.map(v=>v-mean);trace(gw,w,h,d,-1.5,1.5);const el=samples.length?samples[samples.length-1].t:0;st.textContent='Recording, '+fmt(Math.max(0,10-el),1)+' s to go. Keep still.';if(el<10)live=requestAnimationFrame(drawLive);}
 async function start(){samples=[];btn.disabled=true;btn.classList.add('live');cancelAnimationFrame(idleRaf);
- if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){try{const r=await DeviceMotionEvent.requestPermission();if(r!=='granted'){st.textContent='Motion access was not granted. Allow it in Settings for this site and try again.';btn.disabled=false;btn.classList.remove('live');return;}}catch(e){st.textContent='Motion access needs a tap on the button in Safari or Chrome over https.';btn.disabled=false;btn.classList.remove('live');return;}}
- if(!('DeviceMotionEvent' in window)){st.textContent='This device does not expose a motion sensor to the browser.';btn.disabled=false;btn.classList.remove('live');return;}
- t0=performance.now();window.addEventListener('devicemotion',onMotion);live=requestAnimationFrame(drawLive);
- setTimeout(finish,10000);}
-function finish(){window.removeEventListener('devicemotion',onMotion);cancelAnimationFrame(live);btn.disabled=false;btn.classList.remove('live');
+ window.setInstrumentBusy?.(true);const version=++captureVersion;for(const id of ['peak','rms','low','high'])document.getElementById(id).textContent='--';
+ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){try{const r=await DeviceMotionEvent.requestPermission();if(version!==captureVersion)return;if(r!=='granted'){releaseCapture();st.textContent='Motion access was not granted. Try the example or allow motion in browser settings.';return;}}catch(e){if(version!==captureVersion)return;releaseCapture();st.textContent='Motion access could not start. Use a supported phone or load the example.';return;}}
+ if(!('DeviceMotionEvent' in window)){releaseCapture();st.textContent='This device does not expose a motion sensor to the browser.';return;}
+ recording=true;t0=performance.now();window.addEventListener('devicemotion',onMotion);live=requestAnimationFrame(drawLive);
+ recordingTimer=setTimeout(finish,10000);}
+function releaseCapture(){captureVersion++;recording=false;clearTimeout(recordingTimer);window.removeEventListener('devicemotion',onMotion);cancelAnimationFrame(live);cancelAnimationFrame(idleRaf);btn.disabled=false;btn.classList.remove('live');window.setInstrumentBusy?.(false);}
+function cancelRecording(){releaseCapture();st.textContent='Recording cancelled. Start again or load an example.';}
+function loadExample(){releaseCapture();samples=Array.from({length:600},(_,i)=>({t:i/60,x:0.15*Math.sin(2*Math.PI*5*i/60),y:0,z:9.81,m:0}));finish();}
+function finish(){releaseCapture();
  if(samples.length<100){st.textContent='Too few samples arrived ('+samples.length+'). Try again and keep the screen on.';return;}
- const fs=50;const T=samples[samples.length-1].t;const n=Math.floor(T*fs);const u=new Float64Array(n);let j=0;for(let i=0;i<n;i++){const t=i/fs;while(j<samples.length-2&&samples[j+1].t<t)j++;const a=samples[j],b=samples[j+1];const f=(t-a.t)/Math.max(1e-6,(b.t-a.t));u[i]=a.m+(b.m-a.m)*Math.min(1,Math.max(0,f));}
+ // Use a signed axis so taking vector magnitude does not double the signal frequency.
+ const variance=axis=>{const mean=samples.reduce((sum,q)=>sum+q[axis],0)/samples.length;return samples.reduce((sum,q)=>sum+(q[axis]-mean)**2,0)/samples.length;};
+ const axis=['x','y','z'].sort((a,b)=>variance(b)-variance(a))[0];
+ if(variance(axis)<1e-10){st.textContent='No changing motion signal was detected. Try again or load the example.';return;}
+ for(const q of samples)q.m=q[axis];
+ const T=samples[samples.length-1].t;const observedRate=(samples.length-1)/Math.max(0.001,T-samples[0].t);
+ if(observedRate<30||T<2){st.textContent='The motion sampling rate was too low for a useful spectrum. Try a different device.';return;}
+ const fs=50;const n=Math.floor(T*fs);const u=new Float64Array(n);let j=0;for(let i=0;i<n;i++){const t=i/fs;while(j<samples.length-2&&samples[j+1].t<t)j++;const a=samples[j],b=samples[j+1];const f=(t-a.t)/Math.max(1e-6,(b.t-a.t));u[i]=a.m+(b.m-a.m)*Math.min(1,Math.max(0,f));}
  const mean=u.reduce((a,b)=>a+b,0)/n;const x=Array.from(u,v=>v-mean);
  {const w0=wave.clientWidth,h0=wave.clientHeight;gw.clearRect(0,0,w0,h0);grid(gw,w0,h0);const m0=Math.max(0.3,...x.map(Math.abs));trace(gw,w0,h0,x,-m0,m0);}
  const P=psd(x,fs);let tot=0,lo=0,hi=0,pk=0,pf=0;for(const q of P){if(q.f>=2&&q.f<=15){tot+=q.p;if(q.p>pk){pk=q.p;pf=q.f;}}if(q.f>=3&&q.f<7)lo+=q.p;if(q.f>=7&&q.f<12)hi+=q.p;}
@@ -132,7 +143,7 @@ function finish(){window.removeEventListener('devicemotion',onMotion);cancelAnim
  tween(document.getElementById('peak'),pf,1);tween(document.getElementById('rms'),rms,0);
  tween(document.getElementById('low'),100*lo/Math.max(1e-9,tot),0,'%');tween(document.getElementById('high'),100*hi/Math.max(1e-9,tot),0,'%');
  const w=spec.clientWidth,h=spec.clientHeight;const fmax=15;const X=f=>f/fmax*w;const sel=P.filter(q=>q.f<=fmax);const mx=Math.max(...sel.map(q=>q.p),1e-12);const t0=performance.now();
- (function draw(){const k=RM?1:Math.min(1,(performance.now()-t0)/900);const e=1-Math.pow(1-k,3);gs.clearRect(0,0,w,h);gs.fillStyle='rgba(34,211,238,0.16)';gs.fillRect(X(3),0,X(7)-X(3),h);gs.fillStyle='rgba(34,211,238,0.08)';gs.fillRect(X(7),0,X(12)-X(7),h);grid(gs,w,h);
+ (function draw(){const k=1;const e=1-Math.pow(1-k,3);gs.clearRect(0,0,w,h);gs.fillStyle='rgba(34,211,238,0.16)';gs.fillRect(X(3),0,X(7)-X(3),h);gs.fillStyle='rgba(34,211,238,0.08)';gs.fillRect(X(7),0,X(12)-X(7),h);grid(gs,w,h);
  gs.save();gs.fillStyle='rgba(52,211,153,0.18)';gs.beginPath();gs.moveTo(X(sel[0].f),h);sel.forEach(q=>gs.lineTo(X(q.f),h-(q.p/mx)*h*0.92*e));gs.lineTo(X(sel[sel.length-1].f),h);gs.closePath();gs.fill();gs.restore();
  const ys=sel.map(q=>(q.p/mx)*h*0.92*e);gs.save();gs.strokeStyle=V('--dot');gs.shadowColor=V('--dot');gs.shadowBlur=12;gs.lineWidth=2;gs.beginPath();sel.forEach((q,i)=>{const y=h-ys[i];if(i===0)gs.moveTo(X(q.f),y);else gs.lineTo(X(q.f),y);});gs.stroke();gs.restore();
  gs.fillStyle=V('--ring');gs.beginPath();gs.arc(X(pf),h-(pk/mx)*h*0.92*e,5,0,Math.PI*2);gs.fill();gs.fillStyle=V('--panel-mid');gs.font='12px Manrope, sans-serif';for(const f of [3,7,12,15]){gs.fillText(f+' Hz',X(f)-12,h-4);}if(k<1)requestAnimationFrame(draw);})();

@@ -1,6 +1,6 @@
 # bipashak
 
-Personal academic website for Dr Bipasha Kashyap, with research, selected publications, teaching, achievements and five interactive instruments.
+Personal academic website for Dr Bipasha Kashyap, with research, publications, supervision, teaching, achievements, talks and five interactive instruments.
 
 ## Preview
 
@@ -8,9 +8,9 @@ Open `index.html` for the academic pages. Microphone, camera and motion demonstr
 
 ## Edit
 
-Academic page content and the shared page layout are in `build.mjs`. Run `node build.mjs` to regenerate the six pages and the 404 page. Styling is in `style.css`. The generated HTML is committed so hosting needs no build tools. Instrument HTML files are self-contained and edited directly.
+Academic page content and the shared page layout are in `build.mjs`. Run `node build.mjs` to regenerate the eight pages, bibliography and 404 page. Styling is in `style.css`. The generated HTML is committed so hosting needs no build tools. Instrument HTML files are self-contained and edited directly.
 
-The instruments are research demonstrations, not medical devices. Their browser implementations have not been established as equivalent to validated study systems.
+The instruments are research demonstrations, not medical devices. Their browser implementations have not been established as equivalent to validated study systems. Four sensor instruments include clearly labelled synthetic examples that work without hardware access. Recording can be cancelled; leaving a page stops capture. Finger tapping supports touch, mouse, Space and Enter.
 
 ## GitHub Pages
 
@@ -27,7 +27,7 @@ To publish, use Settings > Pages > Deploy from a branch > main > / (root). Priva
 - Research illustration: owner-provided image.
 - Instruments: adapted from the existing local Five Small Instruments project.
 
-The publication list is selected, not a claim of completeness. The 2026 item is labelled as a preprint. Pending grant outcomes, unconfirmed software releases, clinical deployment details, citation metrics and student identities are omitted. The time-series ensemble paper is dated 2025 using its DOI record; FedXPro uses its 2024 publication year.
+The publication list contains 18 records verified against available sources, not a claim of exhaustive coverage. The 2026 item is labelled as a preprint. Pending grant outcomes, unconfirmed software releases, clinical deployment details, citation metrics and student identities are omitted. The time-series ensemble paper is dated 2025 using its DOI record; FedXPro uses its 2024 publication year. The Engineering Design unit code is omitted because the supplied biography and public university record disagree.
 
 The speech timing reference uses DOI `10.1016/j.bspc.2019.101759`; the previous demo had an incorrect final digit. It is described as related research rather than validation of this connected-speech demonstration.
 

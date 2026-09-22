@@ -127,17 +127,18 @@ function fitCanvas(c){const d=window.devicePixelRatio||1;const w=c.clientWidth;c
 function plotbg(g,w,h){g.fillStyle=V('--plotbg');g.fillRect(0,0,w,h);}
 function grid(g,w,h){g.strokeStyle=V('--grid');g.lineWidth=1;for(let x=0;x<=w;x+=w/8){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();}for(let y=0;y<=h;y+=h/4){g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();}}
 function trace(g,w,h,arr,lo,hi,color){if(arr.length<2)return;g.save();g.strokeStyle=color||V('--dot');g.lineWidth=2;g.shadowColor=color||V('--dot');g.shadowBlur=10;g.lineJoin='round';g.beginPath();for(let i=0;i<arr.length;i++){const x=i/(arr.length-1)*w;const y=h-(arr[i]-lo)/(hi-lo)*h;if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();g.restore();}
-function idleWave(c,g,phaseRef){if(RM)return;const w=c.clientWidth,h=c.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);const a=[];for(let i=0;i<160;i++){const t=i/160;a.push(0.35*Math.sin(2*Math.PI*(3*t)+phaseRef.p)*Math.exp(-((t-0.5)**2)/0.12)+0.06*Math.sin(2*Math.PI*11*t+phaseRef.p*2));}trace(g,w,h,a,-0.6,0.6,V('--dot'));phaseRef.p+=0.045;}
-function tween(el,to,dec,suffix){if(RM||!isFinite(to)){el.textContent=fmt(to,dec)+(suffix||'');return;}const t0=performance.now();el.classList.add('hot');(function f(){const k=Math.min(1,(performance.now()-t0)/700);const e=1-Math.pow(1-k,3);el.textContent=fmt(to*e,dec)+(suffix||'');if(k<1)requestAnimationFrame(f);else setTimeout(()=>el.classList.remove('hot'),600);})();}
+function idleWave(c,g,phaseRef){const w=c.clientWidth,h=c.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);const a=[];for(let i=0;i<160;i++){const t=i/160;a.push(0.35*Math.sin(2*Math.PI*(3*t)+phaseRef.p)*Math.exp(-((t-0.5)**2)/0.12)+0.06*Math.sin(2*Math.PI*11*t+phaseRef.p*2));}trace(g,w,h,a,-0.6,0.6,V('--dot'));if(!RM)phaseRef.p+=0.045;}
+function tween(el,to,dec,suffix){el.textContent=fmt(to,dec)+(suffix||'');}
 function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len;const wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<len/2;j++){const ur=re[i+j],ui=im[i+j];const vr=re[i+j+len/2]*cr-im[i+j+len/2]*ci;const vi=re[i+j+len/2]*ci+im[i+j+len/2]*cr;re[i+j]=ur+vr;im[i+j]=ui+vi;re[i+j+len/2]=ur-vr;im[i+j+len/2]=ui-vi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}}
 function psd(sig,fs){let n=1;while(n<sig.length*2)n<<=1;const re=new Float64Array(n),im=new Float64Array(n);const N=sig.length;const mean=sig.reduce((a,b)=>a+b,0)/N;for(let i=0;i<N;i++){const w=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));re[i]=(sig[i]-mean)*w;}fft(re,im);const out=[];for(let k=0;k<n/2;k++){out.push({f:k*fs/n,p:(re[k]*re[k]+im[k]*im[k])/N});}return out;}
 function fmt(x,d){return isFinite(x)?x.toFixed(d):'--';}
 
 const env=document.getElementById('env');let g=fitCanvas(env);
-window.addEventListener('resize',()=>{g=fitCanvas(env);draw();});
+window.addEventListener('resize',()=>{g=fitCanvas(env);if(analysed)render();});
 const st=document.getElementById('status'),btn=document.getElementById('go');
 const thr=document.getElementById('thr'),thrv=document.getElementById('thrv');
 let ctx=null,proc=null,src=null,stream=null,buf=[],fs=48000,raf=null,t0=0;
+let captureVersion=0,recordingTimer=null;
 let E=[],HOP=0.010,analysed=false;
 const ph={p:0};let idleRaf=null;
 function idle(){(function loop(){idleWave(env,g,ph);idleRaf=requestAnimationFrame(loop);})();}
@@ -172,6 +173,7 @@ function analyse(){
   // smooth, then normalise
   const sm=e.map((_,i)=>{let a=0,c=0;for(let j=Math.max(0,i-2);j<=Math.min(e.length-1,i+2);j++){a+=e[j];c++;}return a/c;});
   const mx=Math.max(...sm,1e-9);
+  if(mx<0.003){analysed=false;st.textContent='No usable speech was captured. Try again closer to the microphone.';return;}
   E=sm.map(v=>v/mx);
   analysed=E.length>20;
   if(!analysed){st.textContent='Too little audio was captured. Try again, a little closer to the microphone.';return;}
@@ -233,26 +235,42 @@ function draw(peaks,pauses,seg){
   if(peaks){g.save();g.fillStyle=V('--ring');g.shadowColor=V('--ring');g.shadowBlur=10;
     for(const i of peaks){g.beginPath();g.arc(X(i),Y(E[i]),5,0,Math.PI*2);g.fill();}g.restore();}
   g.fillStyle=V('--panel-mid');g.font='12px Manrope, sans-serif';
-  g.fillText('amplitude envelope · orange bands are pauses',8,15);
+  g.fillText('amplitude envelope; shaded bands are pauses',8,15);
 }
 
 thr.addEventListener('input',()=>{thrv.textContent=(+thr.value/100).toFixed(2);if(analysed)render();});
 
-function stop(){
-  if(!proc)return;
-  proc.disconnect();src.disconnect();stream.getTracks().forEach(t=>t.stop());ctx.close();proc=null;
-  cancelAnimationFrame(raf);btn.disabled=false;btn.classList.remove('live');analyse();
+function releaseCapture(){
+  captureVersion++;clearTimeout(recordingTimer);cancelAnimationFrame(raf);cancelAnimationFrame(idleRaf);
+  if(proc){proc.onaudioprocess=null;proc.disconnect();proc=null;}if(src){src.disconnect();src=null;}
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  if(ctx&&ctx.state!=='closed')ctx.close().catch(()=>{});ctx=null;
+  btn.disabled=false;btn.classList.remove('live');window.setInstrumentBusy?.(false);
+}
+function cancelRecording(){releaseCapture();st.textContent='Recording cancelled. Start again or load an example.';}
+function stop(){if(!proc)return;releaseCapture();analyse();}
+function loadExample(){
+  releaseCapture();fs=16000;const x=new Float32Array(fs*5);
+  const centres=[0.35,0.65,0.95,1.25,1.55,2.3,2.6,2.9,3.2,3.5,4.15,4.5];
+  for(let i=0;i<x.length;i++){const t=i/fs;let envelope=0;for(const c of centres)envelope+=0.22*Math.exp(-(((t-c)/0.065)**2));x[i]=envelope*Math.sin(2*Math.PI*160*t);}
+  buf=[x];analyse();
 }
 async function start(){
   btn.disabled=true;btn.classList.add('live');cancelAnimationFrame(idleRaf);buf=[];analysed=false;
-  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});}
-  catch(e){st.textContent='Microphone access was not granted. Allow it for this site and try again.';btn.disabled=false;btn.classList.remove('live');return;}
-  ctx=new (window.AudioContext||window.webkitAudioContext)();fs=ctx.sampleRate;
-  src=ctx.createMediaStreamSource(stream);proc=ctx.createScriptProcessor(2048,1,1);
-  src.connect(proc);proc.connect(ctx.destination);t0=ctx.currentTime;
+  for(const id of ['syl','rate','pause','cv'])document.getElementById(id).textContent='--';
+  window.setInstrumentBusy?.(true);const version=++captureVersion;
+  try{
+    const opened=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
+    if(version!==captureVersion){opened.getTracks().forEach(t=>t.stop());return;}stream=opened;
+    ctx=new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();
+    if(version!==captureVersion)return;fs=ctx.sampleRate;
+    src=ctx.createMediaStreamSource(stream);proc=ctx.createScriptProcessor(2048,1,1);
+    src.connect(proc);proc.connect(ctx.destination);t0=ctx.currentTime;
+  }catch(e){if(version!==captureVersion)return;releaseCapture();st.textContent='Microphone recording could not start. Check browser permissions, or load the example.';return;}
   proc.onaudioprocess=e=>{buf.push(new Float32Array(e.inputBuffer.getChannelData(0)));
     if(ctx.currentTime-t0>5.0)stop();};
   st.textContent='Recording. Read the line aloud.';
+  recordingTimer=setTimeout(stop,5500);
   (function live(){
     const w=env.clientWidth,h=env.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);
     const last=buf.slice(-14),a=[];for(const b of last)for(let i=0;i<b.length;i+=8)a.push(b[i]);

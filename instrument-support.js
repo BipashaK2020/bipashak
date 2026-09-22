@@ -18,6 +18,37 @@
 
   const explanation = document.createElement('p');
   explanation.className = 'fine';
+  explanation.id = 'signal-source';
   explanation.textContent = 'Before recording, any moving trace is an illustration of a signal, not a measurement.';
   document.querySelector('.lead').after(explanation);
+
+  const controls = document.createElement('div');
+  controls.className = 'example-controls';
+  const example = document.createElement('button');
+  example.type = 'button';
+  example.textContent = 'Load example';
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.textContent = 'Cancel recording';
+  cancel.hidden = true;
+  controls.append(example, cancel);
+  start.after(controls);
+  window.setInstrumentBusy = busy => {
+    example.disabled = busy;
+    cancel.hidden = !busy;
+    if (busy) explanation.textContent = 'Recording from your device. No samples are uploaded.';
+    if (!busy && unavailable) start.disabled = true;
+  };
+  example.addEventListener('click', () => {
+    if (typeof loadExample !== 'function') return;
+    loadExample();
+    explanation.textContent = 'Synthetic example signal. These values are generated for demonstration, not recorded from a person.';
+  });
+  cancel.addEventListener('click', () => {
+    if (typeof cancelRecording === 'function') cancelRecording();
+    explanation.textContent = 'Recording cancelled. No new measurement is available.';
+  });
+  window.addEventListener('pagehide', () => {
+    if (typeof cancelRecording === 'function') cancelRecording();
+  });
 })();
