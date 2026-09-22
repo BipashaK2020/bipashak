@@ -22,12 +22,16 @@ To publish, use Settings > Pages > Deploy from a branch > main > / (root). Priva
 
 - Biography, research direction, teaching and selected achievements: owner's supplied page-by-page biography.
 - Current appointments, university email, profile photo and ORCID: https://experts.deakin.edu.au/37446-bipasha-kashyap
-- Publication metadata: Deakin research outputs and Crossref DOI records, checked 22 September 2026.
-- 2026 preprint: https://arxiv.org/abs/2602.20592
+- Publication metadata: Deakin research outputs, Crossref DOI records and ISCA Archive, checked 23 September 2026.
+- Interspeech 2026 proceedings: https://www.isca-archive.org/interspeech_2026/kashyap26_interspeech.html
 - Research illustration: owner-provided image.
 - Instruments: adapted from the existing local Five Small Instruments project.
 
-The publication list contains 18 records verified against available sources, not a claim of exhaustive coverage. The 2026 item is labelled as a preprint. Pending grant outcomes, unconfirmed software releases, clinical deployment details, citation metrics and student identities are omitted. The time-series ensemble paper is dated 2025 using its DOI record; FedXPro uses its 2024 publication year. The Engineering Design unit code is omitted because the supplied biography and public university record disagree.
+The publication list contains 18 journal and conference records, not a claim of exhaustive coverage. The Interspeech 2026 paper is now linked to its published proceedings record and DOI. Preprints and the doctoral thesis are excluded. Pending grant outcomes, unconfirmed software releases, clinical deployment details, citation metrics and student identities are omitted. The time-series ensemble paper is dated 2025 using its DOI record; FedXPro uses its 2024 publication year. The Engineering Design unit code is omitted because the supplied biography and public university record disagree.
+
+The updated page-by-page biography supplies the teaching approach, mentoring activities, professional memberships, scheduled conference roles and historical research-engineering contribution. Research follows its five-project sequence, with proposed work distinguished from completed outputs. Conference participation is upcoming as of 23 September 2026. Detailed clinical deployment, commercial and audit claims remain excluded pending clearance. Student destinations are not published without consent.
+
+The 2017 SISO paper uses the corrected DOI `10.1109/BIBE.2017.000-8` and complete author list, checked against Crossref and Monash's research record. The 2018 syllabic-timing paper retains the author order in Crossref where the supplied biography differs. Collaborator Dinh C. Nguyen's name follows the published FedXPro record.
 
 The speech timing reference uses DOI `10.1016/j.bspc.2019.101759`; the previous demo had an incorrect final digit. It is described as related research rather than validation of this connected-speech demonstration.
 
