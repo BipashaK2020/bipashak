@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fingertip pulse</title>
+
+<style>
+:root{
+  --font:"Manrope",-apple-system,system-ui,sans-serif;
+  --bg:#F8FAFC; --card:#FFFFFF; --panel:#020617; --chipbg:#FFFFFF;
+  --ink:#0F172A; --mid:#64748B; --num:#0F172A;
+  --accent:#047857; --accent2:#047857; --hot:#BE123C;
+  --hair:#E2E8F0;
+  --sh:0 2px 8px rgba(15,23,42,.05), 0 16px 38px rgba(15,23,42,.10);
+  --sh-sm:0 2px 8px rgba(15,23,42,.07);
+  --pad:#34D399; --pad-hit:#22D3EE; --pad-text:#022C22;
+  --ring:#22D3EE; --arc:#34D399; --dot:#34D399; --grid:#1E293B; --plotbg:#020617;
+  --panel-ink:#F8FAFC; --panel-mid:#94A3B8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);font-size:16px;line-height:1.55;background:var(--bg);color:var(--ink)}
+main{max-width:460px;margin:0 auto;padding:14px 18px 44px}
+
+.topbar{display:flex;align-items:center;gap:12px;margin:4px 0 22px}
+.crumb{flex:1;font-size:14px;color:var(--mid);letter-spacing:.02em}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:0;background:var(--chipbg);color:var(--ink);
+  font-size:19px;line-height:42px;text-align:center;text-decoration:none;display:inline-block;cursor:pointer;
+  box-shadow:var(--sh-sm);transition:transform .12s;flex:0 0 auto}
+.icon-btn:active{transform:scale(.94)}
+
+h1{font-size:30px;line-height:1.15;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+.lead{color:var(--mid);margin:0 0 20px;font-size:15.5px}
+h2{font-size:15px;font-weight:600;margin:0;letter-spacing:-.01em}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 12px}
+.hint{font-size:13px;color:var(--mid)}
+
+.card{background:var(--card);border-radius:24px;padding:18px;box-shadow:var(--sh)}
+.panel{background:var(--panel);padding:14px}
+.panel + .panel{margin-top:12px}
+canvas{width:100%;height:auto;display:block;border-radius:14px}
+
+button.go{appearance:none;border:0;background:var(--accent2);color:#FFFFFF;font:inherit;font-weight:600;
+  font-size:17px;padding:16px 20px;border-radius:18px;width:100%;margin:18px 0 8px;cursor:pointer;
+  box-shadow:0 8px 22px rgba(4,120,87,.28);transition:transform .12s ease,background .2s}
+button.go:active{transform:scale(.985)}
+button.go:disabled{background:#CBD5E1;color:#64748B;box-shadow:none}
+button.go.live{animation:ring 1.4s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(4,120,87,.5)}100%{box-shadow:0 0 0 18px rgba(4,120,87,0)}}
+button:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.status{min-height:22px;color:var(--mid);font-size:14.5px;margin:14px 2px 0}
+
+.readouts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+.stat{padding:16px 16px 14px}
+.chip{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:15px;margin-bottom:12px}
+.chip-a{background:rgba(4,120,87,.10);color:#047857}
+.chip-b{background:rgba(14,116,144,.10);color:#0E7490}
+.stat b{display:block;font-size:30px;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;color:var(--num);transition:color .3s}
+.stat b.hot{color:var(--hot)}
+.lab{display:block;font-size:12.5px;color:var(--mid);margin-top:5px;line-height:1.35}
+
+.note{font-size:14.5px;margin:26px 2px 0}
+.ref{font-size:13px;color:var(--mid);margin:14px 2px 0}
+.ref a{color:var(--accent)}
+.fine{font-size:12.5px;color:var(--mid);border-top:1px solid var(--hair);padding-top:14px;margin:24px 2px 0}
+a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="instrument-support.js" defer></script>
+</head>
+<body class="instrument-page">
+<nav class="site-back" aria-label="Site navigation"><a href="index.html">Bipasha Kashyap</a><a href="instruments.html">All instruments</a></nav>
+<main>
+<div class="topbar">
+  <a class="icon-btn" href="instruments.html" aria-label="All instruments">&#8249;</a>
+  <span class="crumb">Instruments</span>
+</div>
+<h1>Fingertip pulse</h1>
+<p class="lead">Explore an optical pulse signal through your phone camera. This demo does not measure oxygen saturation.</p>
+
+<video id="v" playsinline muted style="display:none"></video>
+<canvas id="frame" width="32" height="32" style="display:none"></canvas>
+<div class="card panel"><canvas id="ppg" data-ratio="0.45"></canvas></div>
+<div class="card panel"><canvas id="heart" data-ratio="0.22" style="margin-top:10px"></canvas></div>
+<button class="go" id="go">Start 30-second reading</button>
+<p class="status" id="status">Press start, allow the camera, then cover the rear camera lens and flash completely with a fingertip. Rest the finger, do not press.</p>
+<div class="readouts"><div class="card stat"><span class="chip chip-a">&#9679;</span><b id="hr">--</b><span class="lab">heart rate, beats per minute</span></div><div class="card stat"><span class="chip chip-b">&#9673;</span><b id="rmssd">--</b><span class="lab">beat-to-beat variability, ms</span></div><div class="card stat"><span class="chip chip-a">&#8767;</span><b id="beats">--</b><span class="lab">beats counted</span></div><div class="card stat"><span class="chip chip-b">&#8776;</span><b id="q">--</b><span class="lab">signal quality</span></div></div>
+<p class="note">The camera records changes in light beneath your fingertip. The demo filters the average redness of each frame and estimates pulse timing from detected peaks. Movement, lighting and camera frame rate can distort the result. It does not measure blood pressure or oxygen saturation.</p>
+
+<p class="ref">Further reading: Scully CG, Lee J, Meyer J, Gorbach AM, Granquist-Fraser D, Mendelson Y, Chon KH. Physiological parameter monitoring from optical recordings with a mobile phone. IEEE Transactions on Biomedical Engineering 2012, 59(2): 303 to 306, <a href="https://doi.org/10.1109/TBME.2011.2163157">doi:10.1109/TBME.2011.2163157</a>.</p>
+<p class="fine">Research demonstration, not a medical device. Estimates depend on the device and recording conditions; they are not a diagnosis. Captured samples are processed in browser memory and are not uploaded by this demo. Built by <a href="index.html">Bipasha Kashyap</a>, NSBE Lab, Deakin University.</p>
+</main>
+<script>
+
+const CSS=getComputedStyle(document.documentElement);const V=n=>CSS.getPropertyValue(n).trim();
+const RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fitCanvas(c){const d=window.devicePixelRatio||1;const w=c.clientWidth;const h=Math.round(w*(c.dataset.ratio?+c.dataset.ratio:0.5));c.width=w*d;c.height=h*d;c.style.height=h+'px';const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);return g;}
+function plotbg(g,w,h){g.fillStyle=V('--plotbg');g.fillRect(0,0,w,h);}
+function grid(g,w,h){g.strokeStyle=V('--grid');g.lineWidth=1;for(let x=0;x<=w;x+=w/8){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();}for(let y=0;y<=h;y+=h/4){g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();}}
+function trace(g,w,h,arr,lo,hi,color){if(arr.length<2)return;g.save();g.strokeStyle=color||V('--dot');g.lineWidth=2;g.shadowColor=color||V('--dot');g.shadowBlur=10;g.lineJoin='round';g.beginPath();for(let i=0;i<arr.length;i++){const x=i/(arr.length-1)*w;const y=h-(arr[i]-lo)/(hi-lo)*h;if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();g.restore();}
+function idleWave(c,g,phaseRef){if(RM)return;const w=c.clientWidth,h=c.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);const a=[];for(let i=0;i<160;i++){const t=i/160;a.push(0.35*Math.sin(2*Math.PI*(3*t)+phaseRef.p)*Math.exp(-((t-0.5)**2)/0.12)+0.06*Math.sin(2*Math.PI*11*t+phaseRef.p*2));}trace(g,w,h,a,-0.6,0.6,V('--dot'));phaseRef.p+=0.045;}
+function tween(el,to,dec,suffix){if(RM||!isFinite(to)){el.textContent=fmt(to,dec)+(suffix||'');return;}const t0=performance.now();el.classList.add('hot');(function f(){const k=Math.min(1,(performance.now()-t0)/700);const e=1-Math.pow(1-k,3);el.textContent=fmt(to*e,dec)+(suffix||'');if(k<1)requestAnimationFrame(f);else setTimeout(()=>el.classList.remove('hot'),600);})();}
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len;const wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<len/2;j++){const ur=re[i+j],ui=im[i+j];const vr=re[i+j+len/2]*cr-im[i+j+len/2]*ci;const vi=re[i+j+len/2]*ci+im[i+j+len/2]*cr;re[i+j]=ur+vr;im[i+j]=ui+vi;re[i+j+len/2]=ur-vr;im[i+j+len/2]=ui-vi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}}
+function psd(sig,fs){let n=1;while(n<sig.length*2)n<<=1;const re=new Float64Array(n),im=new Float64Array(n);const N=sig.length;const mean=sig.reduce((a,b)=>a+b,0)/N;for(let i=0;i<N;i++){const w=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));re[i]=(sig[i]-mean)*w;}fft(re,im);const out=[];for(let k=0;k<n/2;k++){out.push({f:k*fs/n,p:(re[k]*re[k]+im[k]*im[k])/N});}return out;}
+function fmt(x,d){return isFinite(x)?x.toFixed(d):'--';}
+
+const v=document.getElementById('v'),fc=document.getElementById('frame'),fg=fc.getContext('2d',{willReadFrequently:true});
+const ppg=document.getElementById('ppg'),heart=document.getElementById('heart');let g=fitCanvas(ppg),gh=fitCanvas(heart);window.addEventListener('resize',()=>{g=fitCanvas(ppg);gh=fitCanvas(heart);});let lastBeat=-1,beatK=0;
+function drawHeart(now){const w=heart.clientWidth,h=heart.clientHeight;gh.clearRect(0,0,w,h);const k=lastBeat<0?0:Math.max(0,1-(now-lastBeat)/450);const r=h*0.28*(1+0.45*k);gh.save();gh.shadowColor=V('--ring');gh.shadowBlur=30*k+8;gh.fillStyle=k>0.02?V('--ring'):V('--pad');gh.beginPath();gh.arc(w/2,h/2,r,0,Math.PI*2);gh.fill();gh.restore();gh.fillStyle=V('--panel-mid');gh.font='12px Manrope, sans-serif';gh.fillText('each beat',8,14);}
+const st=document.getElementById('status'),btn=document.getElementById('go');
+let stream=null,raw=[],t0=0,raf=null,peaks=[];
+const ph={p:0};let idleRaf=null;function idle(){drawHeart(0);(function loop(){idleWave(ppg,g,ph);idleRaf=requestAnimationFrame(loop);})();}idle();
+async function start(){btn.disabled=true;btn.classList.add('live');cancelAnimationFrame(idleRaf);raw=[];peaks=[];lastBeat=-1;
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:320},height:{ideal:240},frameRate:{ideal:30}},audio:false});}catch(e){st.textContent='Camera access was not granted. Allow it for this site and try again.';btn.disabled=false;btn.classList.remove('live');return;}
+ v.srcObject=stream;await v.play();const track=stream.getVideoTracks()[0];try{await track.applyConstraints({advanced:[{torch:true}]});}catch(e){}
+ t0=performance.now();st.textContent='Reading. Keep the finger still for 30 seconds.';raf=requestAnimationFrame(step);setTimeout(finish,30000);}
+function step(){const t=(performance.now()-t0)/1000;fg.drawImage(v,0,0,32,32);const d=fg.getImageData(8,8,16,16).data;let r=0,gsum=0;for(let i=0;i<d.length;i+=4){r+=d[i];gsum+=d[i+1];}r/=256;gsum/=256;raw.push({t:t,r:r,g:gsum});render(t);if(t<30)raf=requestAnimationFrame(step);}
+function filtered(){const n=raw.length;if(n<40)return [];const win=15;const out=new Array(n);for(let i=0;i<n;i++){let s=0,c=0;for(let j=Math.max(0,i-win);j<=Math.min(n-1,i+win);j++){s+=raw[j].r;c++;}out[i]=raw[i].r-s/c;}const sm=new Array(n);for(let i=0;i<n;i++){let s=0,c=0;for(let j=Math.max(0,i-2);j<=Math.min(n-1,i+2);j++){s+=out[j];c++;}sm[i]=s/c;}return sm;}
+function findPeaks(x){const p=[];if(x.length<10)return p;const absm=x.slice(-300).map(Math.abs);const thr=0.35*(absm.reduce((a,b)=>a+b,0)/absm.length)*2;let last=-1;for(let i=2;i<x.length-2;i++){if(x[i]>thr&&x[i]>=x[i-1]&&x[i]>=x[i-2]&&x[i]>x[i+1]&&x[i]>x[i+2]){if(last<0||raw[i].t-raw[last].t>0.33){p.push(i);last=i;}}}return p;}
+function render(t){const w=ppg.clientWidth,h=ppg.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);const x=filtered();const covered=raw.length&&raw[raw.length-1].r>120&&raw[raw.length-1].g<raw[raw.length-1].r*0.8;document.getElementById('q').textContent=covered?'good':'cover the lens';
+ if(x.length>60){const last=x.slice(-240);const m=Math.max(1,...last.map(Math.abs));trace(g,w,h,last,-m*1.2,m*1.2);peaks=findPeaks(x);if(peaks.length&&peaks[peaks.length-1]>x.length-8){const pt=raw[peaks[peaks.length-1]].t;if(Math.abs(pt-lastBeat)>0.25)lastBeat=performance.now();}const win=peaks.filter(i=>raw[i].t>t-10);if(win.length>=3){const ib=[];for(let k=1;k<win.length;k++)ib.push(raw[win[k]].t-raw[win[k-1]].t);ib.sort((a,b)=>a-b);const med=ib[Math.floor(ib.length/2)];document.getElementById('hr').textContent=fmt(60/med,0);}document.getElementById('beats').textContent=peaks.length;}
+ g.fillStyle=V('--panel-mid');g.font='12px Manrope, sans-serif';g.fillText(fmt(Math.max(0,30-t),0)+' s to go',6,14);drawHeart(performance.now());}
+function finish(){cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(tr=>tr.stop());btn.disabled=false;btn.classList.remove('live');const x=filtered();peaks=findPeaks(x);const pt=peaks.map(i=>{const a=x[i-1],b=x[i],c=x[i+1];const den=a-2*b+c;const d=den!==0?0.5*(a-c)/den:0;const dt=(raw[Math.min(raw.length-1,i+1)].t-raw[Math.max(0,i-1)].t)/2;return raw[i].t+d*dt;});const ib=[];for(let k=1;k<pt.length;k++){const d=(pt[k]-pt[k-1])*1000;if(d>330&&d<1500)ib.push(d);}
+ if(ib.length<8){st.textContent='Not enough clean beats. Cover the lens and the flash fully and try again in good light.';return;}
+ let s=0;for(let k=1;k<ib.length;k++)s+=(ib[k]-ib[k-1])**2;const rmssd=Math.sqrt(s/(ib.length-1));const mean=ib.reduce((a,b)=>a+b,0)/ib.length;
+ tween(document.getElementById('hr'),60000/mean,0);tween(document.getElementById('rmssd'),rmssd,0);tween(document.getElementById('beats'),ib.length+1,0);st.textContent='Done. Press start to repeat.';}
+btn.addEventListener('click',start);
+
+</script>
+</body>
+</html>

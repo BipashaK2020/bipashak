@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sustained vowel</title>
+
+<style>
+:root{
+  --font:"Manrope",-apple-system,system-ui,sans-serif;
+  --bg:#F8FAFC; --card:#FFFFFF; --panel:#020617; --chipbg:#FFFFFF;
+  --ink:#0F172A; --mid:#64748B; --num:#0F172A;
+  --accent:#047857; --accent2:#047857; --hot:#BE123C;
+  --hair:#E2E8F0;
+  --sh:0 2px 8px rgba(15,23,42,.05), 0 16px 38px rgba(15,23,42,.10);
+  --sh-sm:0 2px 8px rgba(15,23,42,.07);
+  --pad:#34D399; --pad-hit:#22D3EE; --pad-text:#022C22;
+  --ring:#22D3EE; --arc:#34D399; --dot:#34D399; --grid:#1E293B; --plotbg:#020617;
+  --panel-ink:#F8FAFC; --panel-mid:#94A3B8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);font-size:16px;line-height:1.55;background:var(--bg);color:var(--ink)}
+main{max-width:460px;margin:0 auto;padding:14px 18px 44px}
+
+.topbar{display:flex;align-items:center;gap:12px;margin:4px 0 22px}
+.crumb{flex:1;font-size:14px;color:var(--mid);letter-spacing:.02em}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:0;background:var(--chipbg);color:var(--ink);
+  font-size:19px;line-height:42px;text-align:center;text-decoration:none;display:inline-block;cursor:pointer;
+  box-shadow:var(--sh-sm);transition:transform .12s;flex:0 0 auto}
+.icon-btn:active{transform:scale(.94)}
+
+h1{font-size:30px;line-height:1.15;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+.lead{color:var(--mid);margin:0 0 20px;font-size:15.5px}
+h2{font-size:15px;font-weight:600;margin:0;letter-spacing:-.01em}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 12px}
+.hint{font-size:13px;color:var(--mid)}
+
+.card{background:var(--card);border-radius:24px;padding:18px;box-shadow:var(--sh)}
+.panel{background:var(--panel);padding:14px}
+.panel + .panel{margin-top:12px}
+canvas{width:100%;height:auto;display:block;border-radius:14px}
+
+button.go{appearance:none;border:0;background:var(--accent2);color:#FFFFFF;font:inherit;font-weight:600;
+  font-size:17px;padding:16px 20px;border-radius:18px;width:100%;margin:18px 0 8px;cursor:pointer;
+  box-shadow:0 8px 22px rgba(4,120,87,.28);transition:transform .12s ease,background .2s}
+button.go:active{transform:scale(.985)}
+button.go:disabled{background:#CBD5E1;color:#64748B;box-shadow:none}
+button.go.live{animation:ring 1.4s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(4,120,87,.5)}100%{box-shadow:0 0 0 18px rgba(4,120,87,0)}}
+button:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.status{min-height:22px;color:var(--mid);font-size:14.5px;margin:14px 2px 0}
+
+.readouts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+.stat{padding:16px 16px 14px}
+.chip{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:15px;margin-bottom:12px}
+.chip-a{background:rgba(4,120,87,.10);color:#047857}
+.chip-b{background:rgba(14,116,144,.10);color:#0E7490}
+.stat b{display:block;font-size:30px;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;color:var(--num);transition:color .3s}
+.stat b.hot{color:var(--hot)}
+.lab{display:block;font-size:12.5px;color:var(--mid);margin-top:5px;line-height:1.35}
+
+.note{font-size:14.5px;margin:26px 2px 0}
+.ref{font-size:13px;color:var(--mid);margin:14px 2px 0}
+.ref a{color:var(--accent)}
+.fine{font-size:12.5px;color:var(--mid);border-top:1px solid var(--hair);padding-top:14px;margin:24px 2px 0}
+a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="instrument-support.js" defer></script>
+</head>
+<body class="instrument-page">
+<nav class="site-back" aria-label="Site navigation"><a href="index.html">Bipasha Kashyap</a><a href="instruments.html">All instruments</a></nav>
+<main>
+<div class="topbar">
+  <a class="icon-btn" href="instruments.html" aria-label="All instruments">&#8249;</a>
+  <span class="crumb">Instruments</span>
+</div>
+<h1>Sustained vowel</h1>
+<p class="lead">Explore pitch and acoustic variation in a sustained vowel.</p>
+
+<div class="card panel"><canvas id="wave" data-ratio="0.4"></canvas></div>
+<div class="card panel"><canvas id="f0" data-ratio="0.4"></canvas></div>
+<button class="go" id="go">Start, then say a long "ah"</button>
+<p class="status" id="status">Take a breath, press start, and hold a steady "ah" for as long as you comfortably can. Recording stops by itself a second after you go quiet.</p>
+<div class="readouts"><div class="card stat"><span class="chip chip-a">&#9679;</span><b id="mpt">--</b><span class="lab">phonation time, s</span></div><div class="card stat"><span class="chip chip-b">&#9673;</span><b id="hz">--</b><span class="lab">mean pitch, Hz</span></div><div class="card stat"><span class="chip chip-a">&#8767;</span><b id="jit">--</b><span class="lab">jitter, %</span></div><div class="card stat"><span class="chip chip-b">&#8776;</span><b id="shim">--</b><span class="lab">shimmer, %</span></div><div class="card stat"><span class="chip chip-a">&#9678;</span><b id="hnr">--</b><span class="lab">harmonics to noise, dB</span></div><div class="card stat"><span class="chip chip-b">&#8735;</span><b id="sd">--</b><span class="lab">pitch spread, Hz</span></div></div>
+<p class="note">This demo estimates pitch and amplitude variation from 40-millisecond frames. The jitter and shimmer readouts are frame-based approximations, not equivalent to cycle-level clinical measurements. Microphone processing, background noise and the recording setup can affect every estimate.</p>
+
+<p class="ref">Further reading: Maryn Y, Ysenbaert F, Zarowski A, Vanspauwen R. Mobile communication devices, ambient noise, and acoustic voice measures. Journal of Voice 2017, 31(2): 248.e11 to 248.e23, <a href="https://doi.org/10.1016/j.jvoice.2016.07.023">doi:10.1016/j.jvoice.2016.07.023</a>. Jitter, shimmer and harmonics-to-noise follow the definitions used in Praat (Boersma 1993).</p>
+<p class="fine">Research demonstration, not a medical device. Estimates depend on the device and recording conditions; they are not a diagnosis. Captured samples are processed in browser memory and are not uploaded by this demo. Built by <a href="index.html">Bipasha Kashyap</a>, NSBE Lab, Deakin University.</p>
+</main>
+<script>
+
+const CSS=getComputedStyle(document.documentElement);const V=n=>CSS.getPropertyValue(n).trim();
+const RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fitCanvas(c){const d=window.devicePixelRatio||1;const w=c.clientWidth;const h=Math.round(w*(c.dataset.ratio?+c.dataset.ratio:0.5));c.width=w*d;c.height=h*d;c.style.height=h+'px';const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);return g;}
+function plotbg(g,w,h){g.fillStyle=V('--plotbg');g.fillRect(0,0,w,h);}
+function grid(g,w,h){g.strokeStyle=V('--grid');g.lineWidth=1;for(let x=0;x<=w;x+=w/8){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();}for(let y=0;y<=h;y+=h/4){g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();}}
+function trace(g,w,h,arr,lo,hi,color){if(arr.length<2)return;g.save();g.strokeStyle=color||V('--dot');g.lineWidth=2;g.shadowColor=color||V('--dot');g.shadowBlur=10;g.lineJoin='round';g.beginPath();for(let i=0;i<arr.length;i++){const x=i/(arr.length-1)*w;const y=h-(arr[i]-lo)/(hi-lo)*h;if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();g.restore();}
+function idleWave(c,g,phaseRef){if(RM)return;const w=c.clientWidth,h=c.clientHeight;g.clearRect(0,0,w,h);plotbg(g,w,h);grid(g,w,h);const a=[];for(let i=0;i<160;i++){const t=i/160;a.push(0.35*Math.sin(2*Math.PI*(3*t)+phaseRef.p)*Math.exp(-((t-0.5)**2)/0.12)+0.06*Math.sin(2*Math.PI*11*t+phaseRef.p*2));}trace(g,w,h,a,-0.6,0.6,V('--dot'));phaseRef.p+=0.045;}
+function tween(el,to,dec,suffix){if(RM||!isFinite(to)){el.textContent=fmt(to,dec)+(suffix||'');return;}const t0=performance.now();el.classList.add('hot');(function f(){const k=Math.min(1,(performance.now()-t0)/700);const e=1-Math.pow(1-k,3);el.textContent=fmt(to*e,dec)+(suffix||'');if(k<1)requestAnimationFrame(f);else setTimeout(()=>el.classList.remove('hot'),600);})();}
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len;const wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<len/2;j++){const ur=re[i+j],ui=im[i+j];const vr=re[i+j+len/2]*cr-im[i+j+len/2]*ci;const vi=re[i+j+len/2]*ci+im[i+j+len/2]*cr;re[i+j]=ur+vr;im[i+j]=ui+vi;re[i+j+len/2]=ur-vr;im[i+j+len/2]=ui-vi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}}
+function psd(sig,fs){let n=1;while(n<sig.length*2)n<<=1;const re=new Float64Array(n),im=new Float64Array(n);const N=sig.length;const mean=sig.reduce((a,b)=>a+b,0)/N;for(let i=0;i<N;i++){const w=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));re[i]=(sig[i]-mean)*w;}fft(re,im);const out=[];for(let k=0;k<n/2;k++){out.push({f:k*fs/n,p:(re[k]*re[k]+im[k]*im[k])/N});}return out;}
+function fmt(x,d){return isFinite(x)?x.toFixed(d):'--';}
+
+const wave=document.getElementById('wave'),f0c=document.getElementById('f0');let gw=fitCanvas(wave),gf=fitCanvas(f0c);
+window.addEventListener('resize',()=>{gw=fitCanvas(wave);gf=fitCanvas(f0c);});
+const st=document.getElementById('status'),btn=document.getElementById('go');
+let ctx=null,proc=null,src=null,stream=null,buf=[],fs=48000,raf=null,voicedSince=-1,quietSince=-1,t0=0;
+const ph={p:0};let idleRaf=null;function idle(){gf.clearRect(0,0,f0c.clientWidth,f0c.clientHeight);grid(gf,f0c.clientWidth,f0c.clientHeight);(function loop(){idleWave(wave,gw,ph);idleRaf=requestAnimationFrame(loop);})();}idle();
+async function start(){btn.disabled=true;btn.classList.add('live');cancelAnimationFrame(idleRaf);buf=[];voicedSince=-1;quietSince=-1;
+ try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});}catch(e){st.textContent='Microphone access was not granted. Allow it for this site and try again.';btn.disabled=false;btn.classList.remove('live');return;}
+ ctx=new (window.AudioContext||window.webkitAudioContext)();fs=ctx.sampleRate;src=ctx.createMediaStreamSource(stream);proc=ctx.createScriptProcessor(2048,1,1);src.connect(proc);proc.connect(ctx.destination);t0=ctx.currentTime;
+ proc.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);buf.push(new Float32Array(d));const rms=Math.sqrt(d.reduce((a,b)=>a+b*b,0)/d.length);const t=ctx.currentTime-t0;if(rms>0.02){if(voicedSince<0)voicedSince=t;quietSince=-1;}else if(voicedSince>=0){if(quietSince<0)quietSince=t;else if(t-quietSince>1.0)stop();}if(t>30)stop();};
+ st.textContent='Listening. Hold the "ah" steady.';raf=requestAnimationFrame(live);}
+function live(){const w=wave.clientWidth,h=wave.clientHeight;gw.clearRect(0,0,w,h);plotbg(gw,w,h);grid(gw,w,h);const last=buf.slice(-12);const x=[];for(const b of last)for(let i=0;i<b.length;i+=8)x.push(b[i]);trace(gw,w,h,x,-0.6,0.6);
+ const w2=f0c.clientWidth,h2=f0c.clientHeight;gf.clearRect(0,0,w2,h2);plotbg(gf,w2,h2);grid(gf,w2,h2);let rms=0;if(last.length){const b=last[last.length-1];let e=0;for(let i=0;i<b.length;i++)e+=b[i]*b[i];rms=Math.sqrt(e/b.length);}const r=h2*0.12+h2*0.35*Math.min(1,rms*6);gf.save();gf.shadowColor=rms>0.02?V('--ring'):V('--pad');gf.shadowBlur=24;gf.fillStyle=rms>0.02?V('--ring'):V('--pad');gf.beginPath();gf.arc(w2/2,h2/2,r,0,Math.PI*2);gf.fill();gf.restore();gf.fillStyle=V('--panel-mid');gf.font='12px sans-serif';gf.fillText(voicedSince>=0?'voice detected':'waiting for voice',8,14);if(proc)raf=requestAnimationFrame(live);}
+function stop(){if(!proc)return;proc.disconnect();src.disconnect();stream.getTracks().forEach(t=>t.stop());ctx.close();proc=null;cancelAnimationFrame(raf);btn.disabled=false;btn.classList.remove('live');analyse();}
+function acf(frame,minLag,maxLag){const N=frame.length;const cum=new Float64Array(N+1);for(let i=0;i<N;i++)cum[i+1]=cum[i]+frame[i]*frame[i];if(cum[N]<1e-9)return {lag:0,r:0};const rs=new Float64Array(maxLag+1);let best=0;for(let lag=minLag;lag<=maxLag;lag++){let s=0;for(let i=0;i+lag<N;i++)s+=frame[i]*frame[i+lag];const e0=cum[N-lag],e1=cum[N]-cum[lag];rs[lag]=s/Math.sqrt(e0*e1+1e-12);if(rs[lag]>best)best=rs[lag];}let bl=0;for(let lag=minLag+1;lag<maxLag;lag++){if(rs[lag]>=best-0.1&&rs[lag]>=rs[lag-1]&&rs[lag]>=rs[lag+1]){bl=lag;break;}}if(!bl)return {lag:0,r:0};const a=rs[bl-1],b=rs[bl],c=rs[bl+1];const den=a-2*b+c;const d=den!==0?0.5*(a-c)/den:0;return {lag:bl+d,r:b};}
+function analyse(){const N=buf.reduce((a,b)=>a+b.length,0);const x=new Float32Array(N);let o=0;for(const b of buf){x.set(b,o);o+=b.length;}
+ const fl=Math.round(0.04*fs),hop=Math.round(0.01*fs);const frames=[];for(let s=0;s+fl<=N;s+=hop){const fr=x.subarray(s,s+fl);let e=0,pk=0;for(let i=0;i<fl;i++){e+=fr[i]*fr[i];pk=Math.max(pk,Math.abs(fr[i]));}const rms=Math.sqrt(e/fl);let f0=0,r=0;if(rms>0.02){const a=acf(fr,Math.round(fs/500),Math.round(fs/60));if(a.r>0.6&&a.lag>0){f0=fs/a.lag;r=a.r;}}frames.push({t:s/fs,rms:rms,pk:pk,f0:f0,r:r});}
+ let bestS=0,bestL=0,cur=0,curS=0;for(let i=0;i<frames.length;i++){if(frames[i].f0>0){if(cur===0)curS=i;cur++;if(cur>bestL){bestL=cur;bestS=curS;}}else cur=0;}
+ if(bestL<20){st.textContent='No steady voiced sound was found. Try again, closer to the microphone, and hold the "ah" for at least half a second.';return;}
+ const seg0=frames.slice(bestS,bestS+bestL);const mpt=bestL*0.01;const sorted=seg0.map(q=>q.f0).sort((a,b)=>a-b);const med=sorted[Math.floor(sorted.length/2)];const seg=seg0.filter(q=>q.f0>0.7*med&&q.f0<1.4*med);const f=seg.map(q=>q.f0);const mf=f.reduce((a,b)=>a+b,0)/f.length;const sd=Math.sqrt(f.reduce((a,b)=>a+(b-mf)*(b-mf),0)/f.length);
+ const T=f.map(v=>1/v);let js=0;for(let i=1;i<T.length;i++)js+=Math.abs(T[i]-T[i-1]);const jitter=100*(js/(T.length-1))/(T.reduce((a,b)=>a+b,0)/T.length);
+ const A=seg.map(q=>q.pk);let ss=0;for(let i=1;i<A.length;i++)ss+=Math.abs(A[i]-A[i-1]);const shimmer=100*(ss/(A.length-1))/(A.reduce((a,b)=>a+b,0)/A.length);
+ const hnr=seg.map(q=>10*Math.log10(Math.max(1e-6,q.r)/Math.max(1e-6,1-q.r)));const mh=hnr.reduce((a,b)=>a+b,0)/hnr.length;
+ tween(document.getElementById('mpt'),mpt,1);tween(document.getElementById('hz'),mf,0);tween(document.getElementById('jit'),jitter,2);tween(document.getElementById('shim'),shimmer,1);tween(document.getElementById('hnr'),mh,1);tween(document.getElementById('sd'),sd,1);
+ const w=wave.clientWidth,h=wave.clientHeight;gw.clearRect(0,0,w,h);plotbg(gw,w,h);grid(gw,w,h);const env=frames.map(q=>q.rms);trace(gw,w,h,env,0,Math.max(0.05,...env)*1.1);gw.fillStyle='rgba(34,211,238,0.28)';gw.fillRect(bestS/frames.length*w,0,bestL/frames.length*w,h);
+ const w2=f0c.clientWidth,h2=f0c.clientHeight;gf.clearRect(0,0,w2,h2);plotbg(gf,w2,h2);grid(gf,w2,h2);gf.save();gf.fillStyle=V('--dot');gf.shadowColor=V('--dot');gf.shadowBlur=8;const hiF=Math.max(300,mf*1.6);frames.forEach((q,i)=>{if(q.f0>0){gf.beginPath();gf.arc(i/frames.length*w2,h2-q.f0/hiF*h2,2.5,0,Math.PI*2);gf.fill();}});gf.restore();gf.fillStyle=V('--panel-mid');gf.font='12px sans-serif';gf.fillText('pitch, Hz (top '+Math.round(hiF)+')',6,14);
+ st.textContent='Done. Press start to repeat.';}
+btn.addEventListener('click',()=>{if(proc)stop();else start();});
+
+</script>
+</body>
+</html>
